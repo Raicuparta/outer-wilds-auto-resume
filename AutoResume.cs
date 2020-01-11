@@ -11,7 +11,6 @@ namespace OWML.AutoResume
     {
         bool isOpenEyesSkipped = false;
         bool _isSolarSystemLoaded = false;
-        PlayerCameraEffectController _cameraEffectController;
 
         void Start() {
             // Skip flash screen.
@@ -29,8 +28,6 @@ namespace OWML.AutoResume
             titleAnimationController.SetValue("_optionsFadeDuration", 0.001f);
             titleAnimationController.SetValue("_optionsFadeSpacing", 0.001f);
 
-            _cameraEffectController = FindObjectOfType<PlayerCameraEffectController>();
-
             Invoke("Resume", 0.5f);
 
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -42,19 +39,27 @@ namespace OWML.AutoResume
         }
 
         void LateUpdate() {
-            // Skip wake up animation.
             if (!isOpenEyesSkipped && _isSolarSystemLoaded) {
-                _cameraEffectController.OpenEyes(0, true);
-                _cameraEffectController.SetValue("_wakeLength", 0f);
-                _cameraEffectController.SetValue("_waitForWakeInput", false);
+                isOpenEyesSkipped = true;
 
+
+                // Skip wake up animation.
+                var cameraEffectController = FindObjectOfType<PlayerCameraEffectController>();
+                cameraEffectController.OpenEyes(0, true);
+                cameraEffectController.SetValue("_wakeLength", 0f);
+                cameraEffectController.SetValue("_waitForWakeInput", false);
+
+                // Skip wake up prompt.
                 LateInitializerManager.pauseOnInitialization = false;
                 Locator.GetPauseCommandListener().RemovePauseCommandLock();
-                Locator.GetPromptManager().RemoveScreenPrompt(_cameraEffectController.GetValue<ScreenPrompt>("_wakePrompt"));
+                Locator.GetPromptManager().RemoveScreenPrompt(cameraEffectController.GetValue<ScreenPrompt>("_wakePrompt"));
                 OWTime.Unpause(OWTime.PauseType.Sleeping);
-                _cameraEffectController.Invoke("WakeUp");
+                cameraEffectController.Invoke("WakeUp");
 
-                isOpenEyesSkipped = true;
+                // Enable all inputs immedeately.
+                OWInput.ChangeInputMode(InputMode.Character);
+                typeof(OWInput).SetValue("_inputFadeFraction", 0f);
+                GlobalMessenger.FireEvent("TakeFirstFlashbackSnapshot");
             }
         }
 
