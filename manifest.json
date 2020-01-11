@@ -1,0 +1,9 @@
+{
+  "filename": "AutoResume.dll",
+  "author": "Raicuparta",
+  "name": "AutoResume",
+  "uniqueName": "Raicuparta.AutoResume",
+  "version": "0.2",
+  "owmlVersion": "0.3.21",
+  "enabled": true
+}
