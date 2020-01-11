@@ -28,6 +28,8 @@ namespace OWML.AutoResume
             titleAnimationController.SetValue("_optionsFadeDuration", 0.001f);
             titleAnimationController.SetValue("_optionsFadeSpacing", 0.001f);
 
+            // Couldn't figure out how to tell if the resume button was ready to be clicked
+            // so I'm just waiting 0.5 seconds.
             Invoke("Resume", 0.5f);
 
             SceneManager.sceneLoaded += OnSceneLoaded;
