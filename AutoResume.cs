@@ -9,48 +9,57 @@ namespace OWML.AutoResume
 {
     public class AutoResume : ModBehaviour
     {
-        bool _done = false;
-        bool _rightScene = false;
+        bool isOpenEyesSkipped = false;
+        bool _isSolarSystemLoaded = false;
+        PlayerCameraEffectController _cameraEffectController;
+
         void Start() {
-            FindObjectOfType<TitleScreenAnimation>().SetValue("_fadeDuration", 0);
-            FindObjectOfType<TitleScreenAnimation>().SetValue("_gamepadSplash", false);
-            FindObjectOfType<TitleScreenAnimation>().SetValue("_introPan", false);
-            FindObjectOfType<TitleScreenManager>().Invoke("FadeInTitleLogo");
+            // Skip flash screen.
+            var titleScreenAnimation = FindObjectOfType<TitleScreenAnimation>();
+            titleScreenAnimation.SetValue("_fadeDuration", 0);
+            titleScreenAnimation.SetValue("_gamepadSplash", false);
+            titleScreenAnimation.SetValue("_introPan", false);
+            titleScreenAnimation.Invoke("FadeInTitleLogo");
 
+            // Skip menu fade.
+            var titleAnimationController = FindObjectOfType<TitleAnimationController>();
+            titleAnimationController.SetValue("_logoFadeDelay", 0.001f);
+            titleAnimationController.SetValue("_logoFadeDuration", 0.001f);
+            titleAnimationController.SetValue("_optionsFadeDelay", 0.001f);
+            titleAnimationController.SetValue("_optionsFadeDuration", 0.001f);
+            titleAnimationController.SetValue("_optionsFadeSpacing", 0.001f);
 
-            FindObjectOfType<TitleAnimationController>().SetValue("_logoFadeDelay", 0.001f);
-            FindObjectOfType<TitleAnimationController>().SetValue("_logoFadeDuration", 0.001f);
-            FindObjectOfType<TitleAnimationController>().SetValue("_optionsFadeDelay", 0.001f);
-            FindObjectOfType<TitleAnimationController>().SetValue("_optionsFadeDuration", 0.001f);
-            FindObjectOfType<TitleAnimationController>().SetValue("_optionsFadeSpacing", 0.001f);
+            _cameraEffectController = FindObjectOfType<PlayerCameraEffectController>();
 
             Invoke("Resume", 0.5f);
 
             SceneManager.sceneLoaded += OnSceneLoaded;
-
         }
         void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-            _rightScene = true;
+            if (scene.name == "SolarSystem") {
+                _isSolarSystemLoaded = true;
+            }
         }
 
         void LateUpdate() {
-            if (!_done && _rightScene) {
-                _done = true;
-                ModHelper.Console.WriteLine("late");
-                FindObjectOfType<PlayerCameraEffectController>().OpenEyes(0, true);
-                FindObjectOfType<PlayerCameraEffectController>().SetValue("_wakeLength", 0f);
-                FindObjectOfType<PlayerCameraEffectController>().SetValue("_waitForWakeInput", false);
+            // Skip wake up animation.
+            if (!isOpenEyesSkipped && _isSolarSystemLoaded) {
+                _cameraEffectController.OpenEyes(0, true);
+                _cameraEffectController.SetValue("_wakeLength", 0f);
+                _cameraEffectController.SetValue("_waitForWakeInput", false);
 
                 LateInitializerManager.pauseOnInitialization = false;
                 Locator.GetPauseCommandListener().RemovePauseCommandLock();
-                Locator.GetPromptManager().RemoveScreenPrompt(FindObjectOfType<PlayerCameraEffectController>().GetValue<ScreenPrompt>("_wakePrompt"));
+                Locator.GetPromptManager().RemoveScreenPrompt(_cameraEffectController.GetValue<ScreenPrompt>("_wakePrompt"));
                 OWTime.Unpause(OWTime.PauseType.Sleeping);
-                FindObjectOfType<PlayerCameraEffectController>().Invoke("WakeUp");
+                _cameraEffectController.Invoke("WakeUp");
+
+                isOpenEyesSkipped = true;
             }
         }
 
         void Resume() {
-
+            // Simulate "resume game" button press.
             ExecuteEvents.Execute(GameObject.Find("Button-ResumeGame"), null, ExecuteEvents.submitHandler);
         }
     }
