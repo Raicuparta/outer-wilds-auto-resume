@@ -1,18 +1,16 @@
-﻿using OWML.Common;
-using OWML.ModHelper;
+﻿using OWML.ModHelper;
 using OWML.ModHelper.Events;
-using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 namespace OWML.AutoResume
 {
     public class AutoResume : ModBehaviour
     {
-        bool isOpenEyesSkipped = false;
+        bool _isOpenEyesSkipped = false;
         bool _isSolarSystemLoaded = false;
 
-        void Start() {
+        private void Start()
+        {
             // Skip flash screen.
             var titleScreenAnimation = FindObjectOfType<TitleScreenAnimation>();
             titleScreenAnimation.SetValue("_fadeDuration", 0);
@@ -28,22 +26,33 @@ namespace OWML.AutoResume
             titleAnimationController.SetValue("_optionsFadeDuration", 0.001f);
             titleAnimationController.SetValue("_optionsFadeSpacing", 0.001f);
 
-            // Couldn't figure out how to tell if the resume button was ready to be clicked
-            // so I'm just waiting 0.5 seconds.
+            // Need to wait a little bit for some reason.
             Invoke("Resume", 0.5f);
 
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
-        void OnSceneLoaded(Scene scene, LoadSceneMode mode) {
-            if (scene.name == "SolarSystem") {
+
+        private void Resume()
+        {
+            // Simulate "resume game" button press.
+            var resume = FindObjectOfType<TitleScreenManager>().GetValue<SubmitActionLoadScene>("_resumeGameAction");
+            resume.Invoke("ConfirmSubmit");
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == "SolarSystem")
+            {
                 _isSolarSystemLoaded = true;
+                _isOpenEyesSkipped = false;
             }
         }
 
-        void LateUpdate() {
-            if (!isOpenEyesSkipped && _isSolarSystemLoaded) {
-                isOpenEyesSkipped = true;
-
+        private void LateUpdate()
+        {
+            if (!_isOpenEyesSkipped && _isSolarSystemLoaded)
+            {
+                _isOpenEyesSkipped = true;
 
                 // Skip wake up animation.
                 var cameraEffectController = FindObjectOfType<PlayerCameraEffectController>();
@@ -63,11 +72,6 @@ namespace OWML.AutoResume
                 typeof(OWInput).SetValue("_inputFadeFraction", 0f);
                 GlobalMessenger.FireEvent("TakeFirstFlashbackSnapshot");
             }
-        }
-
-        void Resume() {
-            // Simulate "resume game" button press.
-            ExecuteEvents.Execute(GameObject.Find("Button-ResumeGame"), null, ExecuteEvents.submitHandler);
         }
     }
 }
