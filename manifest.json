@@ -2,6 +2,7 @@
   "filename": "AutoResume.dll",
   "author": "Raicuparta",
   "name": "Auto Resume",
+  "description": "Automatically skips splash screen, starts game, and wakes up player.",
   "uniqueName": "Raicuparta.AutoResume",
   "version": "0.3",
   "owmlVersion": "0.3.55",
